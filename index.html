@@ -73,7 +73,7 @@
 
         .sub-header th { background-color: #121c11; color: var(--text-muted); font-size: 0.75rem; }
 
-        input.edit-field { background: #000; border: 1px solid var(--accent-gold); color: #fff; padding: 4px 6px; border-radius: 4px; width: 100%; min-width: 60px; text-align: center; font-size: 0.8rem; }
+        input.edit-field, select.edit-field { background: #000; border: 1px solid var(--accent-gold); color: #fff; padding: 4px 6px; border-radius: 4px; width: 100%; min-width: 60px; text-align: center; font-size: 0.8rem; }
         input.edit-field-sm { width: 45px; }
 
         .status-badge { padding: 3px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; display: inline-block; }
@@ -84,15 +84,16 @@
         .strike-dot { height: 10px; width: 10px; background-color: #444; border-radius: 50%; display: inline-block; margin: 0 2px; }
         .strike-active { background-color: #ff3333; box-shadow: 0 0 5px #ff3333; }
 
-        /* Auth Modal */
+        /* Auth & Action Modals */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.85); display: flex; align-items: center; justify-content: center;
             opacity: 0; pointer-events: none; transition: opacity 0.25s ease; z-index: 1000;
         }
         .modal-overlay.active { opacity: 1; pointer-events: all; }
-        .modal { background: var(--panel-bg); border: 2px solid var(--accent-gold); border-radius: 8px; width: 360px; padding: 24px; text-align: center; }
-        .modal input { width: 100%; padding: 10px; margin: 14px 0; background: #000; border: 1px solid var(--panel-border); color: #fff; border-radius: 4px; text-align: center; }
+        .modal { background: var(--panel-bg); border: 2px solid var(--accent-gold); border-radius: 8px; width: 380px; padding: 24px; text-align: center; }
+        .modal input, .modal select { width: 100%; padding: 10px; margin: 8px 0; background: #000; border: 1px solid var(--panel-border); color: #fff; border-radius: 4px; text-align: center; }
+        .modal label { color: var(--accent-gold); font-size: 0.8rem; display: block; text-align: left; margin-top: 6px; }
     </style>
 </head>
 <body>
@@ -104,6 +105,7 @@
         </div>
         <div>
             <span id="authBadge" style="color: var(--accent-gold); margin-right: 12px; font-size: 0.85rem;">🔒 Read-Only</span>
+            <button id="addBtn" class="btn" style="display: none; margin-right: 8px;" onclick="openAddModal()">➕ Add Individual</button>
             <button id="authBtn" class="btn btn-gold" onclick="openAuthModal()">Unlock Editor Mode</button>
         </div>
     </div>
@@ -121,6 +123,7 @@
         <div id="tableContainer">Fetching live database from Google Sheets...</div>
     </div>
 
+    <!-- Passcode Modal -->
     <div class="modal-overlay" id="authModal">
         <div class="modal">
             <h3 style="color: var(--accent-gold);">Enter Editor Passcode</h3>
@@ -133,62 +136,135 @@
         </div>
     </div>
 
+    <!-- Add Individual Modal -->
+    <div class="modal-overlay" id="addModal">
+        <div class="modal">
+            <h3 style="color: var(--accent-gold); margin-bottom: 12px;">Add New Personnel</h3>
+            
+            <label>Position</label>
+            <input type="text" id="addPosition" placeholder="e.g. Head Instructor">
+            
+            <label>Username</label>
+            <input type="text" id="addUsername" placeholder="e.g. RobloxUsername">
+            
+            <label>Rank</label>
+            <input type="text" id="addRank" placeholder="e.g. MAJ / CPT">
+            
+            <label>Status</label>
+            <select id="addStatus">
+                <option value="ACTIVE">ACTIVE</option>
+                <option value="SEMI-ACTIVE">SEMI-ACTIVE</option>
+                <option value="VACANT">VACANT</option>
+            </select>
+
+            <div style="display: flex; gap: 8px; justify-content: center; margin-top: 16px;">
+                <button class="btn btn-gold" onclick="submitNewIndividual()">Add Personnel</button>
+                <button class="btn" onclick="closeAddModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const PASSCODE = "OCS-Cute-2026";
-        const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbxmTSEvGnMtOLVoqRlDd5UCIJmy2mhCplHgdG7yk8N3St4Val_wGT-QF8h69wzvkRtM/exec"; // PASTE YOUR WEB APP URL HERE
+        const SHEET_API_URL = "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL"; // REPLACE WITH YOUR DEPLOYED WEB APP URL
         
         let isEditor = false;
         let currentTab = 'HQ';
         
-        let fullData = {
-            HQ: [
-                { position: "Commanding General", username: "Parzival961006", rank: "LTGEN", service: "31 DAYS", status: "ACTIVE", tracker: { sun: 0, mon: 0, tue: 0, wed: 0, thu: 0, fri: 0, sat: 0 }, subtotal: 0, quotaStatus: "INCOMPLETE", lastWeek: 0, lastQuotaStatus: "INCOMPLETE", runningTotal: 0, warnings: 0, strikes: 0 },
-                { position: "Program Director", username: "odatGamerYt", rank: "MGEN", service: "23 DAYS", status: "ACTIVE", tracker: { sun: 0, mon: 0, tue: 0, wed: 0, thu: 0, fri: 0, sat: 0 }, subtotal: 0, quotaStatus: "INCOMPLETE", lastWeek: 0, lastQuotaStatus: "INCOMPLETE", runningTotal: 0, warnings: 0, strikes: 0 },
-                { position: "Program Deputy Director", username: "Kiritosenato123", rank: "BGEN", service: "23 DAYS", status: "ACTIVE", tracker: { sun: 0, mon: 0, tue: 0, wed: 0, thu: 0, fri: 0, sat: 0 }, subtotal: 0, quotaStatus: "INCOMPLETE", lastWeek: 0, lastQuotaStatus: "INCOMPLETE", runningTotal: 0, warnings: 0, strikes: 0 },
-                { position: "Assistant Deputy Director", username: "Rip_banana003", rank: "COL", service: "2 DAYS", status: "ACTIVE", tracker: { sun: 0, mon: 0, tue: 0, wed: 0, thu: 0, fri: 0, sat: 0 }, subtotal: 0, quotaStatus: "INCOMPLETE", lastWeek: 0, lastQuotaStatus: "INCOMPLETE", runningTotal: 0, warnings: 0, strikes: 0 }
-            ],
-            OPS: [
-                { position: "Chief (C-OPS)", username: "noob_rg14", rank: "COL", service: "15 DAYS", status: "SEMI-ACTIVE", tracker: { sun: 0, mon: 0, tue: 0, wed: 0, thu: 0, fri: 0, sat: 0 }, subtotal: 0, quotaStatus: "INCOMPLETE", lastWeek: 0, lastQuotaStatus: "INCOMPLETE", runningTotal: 0, warnings: 0, strikes: 0 },
-                { position: "Deputy Chief (DC-OPS)", username: "Yeyemode9192_1", rank: "LTCOL", service: "15 DAYS", status: "SEMI-ACTIVE", tracker: { sun: 0, mon: 0, tue: 0, wed: 0, thu: 0, fri: 0, sat: 0 }, subtotal: 0, quotaStatus: "INCOMPLETE", lastWeek: 0, lastQuotaStatus: "INCOMPLETE", runningTotal: 0, warnings: 0, strikes: 0 },
-                { position: "Head Standards Officer", username: "VACANT", rank: "MAJ", service: "-", status: "VACANT", tracker: { sun: 0, mon: 0, tue: 0, wed: 0, thu: 0, fri: 0, sat: 0 }, subtotal: 0, quotaStatus: "INCOMPLETE", lastWeek: 0, lastQuotaStatus: "INCOMPLETE", runningTotal: 0, warnings: 0, strikes: 0 }
-            ],
-            OCDF: [
-                { position: "Dean of Faculty", username: "castomer00", rank: "COL", service: "15 DAYS", status: "SEMI-ACTIVE", faculty: { ori: 0, sup: 0, p1: 0, p2: 0, p3: 0, p4: 0, p5: 0, qz: 0, ex: 0 }, subtotal: 0, quotaStatus: "INCOMPLETE", lastWeek: 0, lastQuotaStatus: "INCOMPLETE", runningTotal: 0, warnings: 0, strikes: 0 },
-                { position: "Deputy Dean", username: "Persus_Nicholas", rank: "LTCOL", service: "15 DAYS", status: "SEMI-ACTIVE", faculty: { ori: 0, sup: 0, p1: 0, p2: 0, p3: 0, p4: 0, p5: 0, qz: 0, ex: 0 }, subtotal: 0, quotaStatus: "INCOMPLETE", lastWeek: 0, lastQuotaStatus: "INCOMPLETE", runningTotal: 0, warnings: 0, strikes: 0 }
-            ],
-            GDH: [
-                { position: "Commandant (C-GDH)", username: "SHELLOGAMINGFROMYT", rank: "COL", service: "15 DAYS", status: "SEMI-ACTIVE", tracker: { sun: 0, mon: 0, tue: 0, wed: 0, thu: 0, fri: 0, sat: 0 }, subtotal: 0, quotaStatus: "INCOMPLETE", lastWeek: 0, lastQuotaStatus: "INCOMPLETE", runningTotal: 0, warnings: 0, strikes: 0 }
-            ],
-            LOA: [
-                { logDate: "2026-09-01", username: "Kiritosenato123", office: "HQ", position: "Program Deputy Director", rank: "BGEN", startDate: "2026-09-02", endDate: "2026-09-05", reason: "Official Duty", approvedBy: "Parzival961006", status: "APPROVED" }
-            ],
-            DISCIPLINE: [
-                { logDate: "2026-08-20", username: "SampleOfficer", office: "OPS", position: "Junior Guard", rank: "2LT", punishment: "Warning", reason: "Inactivity on Duty", issuedBy: "noob_rg14", performedOn: "2026-08-21", discOfficer: "Yeyemode9192_1" }
-            ]
-        };
+        let fullData = { HQ: [], OPS: [], OCDF: [], GDH: [], LOA: [], DISCIPLINE: [] };
 
-        // Live API fetch with cache-busting timestamp
         async function fetchTabData(tab) {
             const container = document.getElementById('tableContainer');
             if (container) container.innerHTML = 'Fetching updates from Google Sheets...';
 
-            if (!SHEET_API_URL || SHEET_API_URL === "https://script.google.com/macros/s/AKfycbxmTSEvGnMtOLVoqRlDd5UCIJmy2mhCplHgdG7yk8N3St4Val_wGT-QF8h69wzvkRtM/exec") {
+            if (!SHEET_API_URL || SHEET_API_URL === "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL") {
                 renderTable();
                 return;
             }
 
             try {
-                // Append Date.now() to bypass browser cache completely
                 const response = await fetch(`${SHEET_API_URL}?tab=${tab}&t=${Date.now()}`);
                 const data = await response.json();
-
                 if (data && data.length > 0) {
                     fullData[tab] = data;
                 }
             } catch (e) {
-                console.warn("Could not fetch live sheet data, showing cached/local data instead:", e);
+                console.warn("Could not fetch live sheet data:", e);
             }
             renderTable();
+        }
+
+        async function sendDataToSheet(payload) {
+            try {
+                await fetch(SHEET_API_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                alert("Individual added and synced with Google Sheets!");
+                fetchTabData(currentTab);
+            } catch (e) {
+                alert("Failed to save to Google Sheets: " + e.message);
+            }
+        }
+
+        function openAuthModal() { document.getElementById('authModal').classList.add('active'); }
+        function closeAuthModal() { document.getElementById('authModal').classList.remove('active'); document.getElementById('authError').style.display = 'none'; }
+        function openAddModal() { document.getElementById('addModal').classList.add('active'); }
+        function closeAddModal() { document.getElementById('addModal').classList.remove('active'); }
+
+        function verifyPasscode() {
+            if (document.getElementById('passcodeInput').value === PASSCODE) {
+                isEditor = true;
+                document.getElementById('authBadge').innerText = '🔓 Editor Mode Active';
+                document.getElementById('authBtn').style.display = 'none';
+                document.getElementById('addBtn').style.display = 'inline-block';
+                closeAuthModal();
+                renderTable();
+            } else {
+                document.getElementById('authError').style.display = 'block';
+            }
+        }
+
+        function submitNewIndividual() {
+            const position = document.getElementById('addPosition').value.trim();
+            const username = document.getElementById('addUsername').value.trim();
+            const rank = document.getElementById('addRank').value.trim();
+            const status = document.getElementById('addStatus').value;
+
+            if (!position || !username) {
+                alert("Please fill in Position and Username.");
+                return;
+            }
+
+            const newRow = {
+                tab: currentTab,
+                position: position,
+                username: username,
+                rank: rank || "OFFICER",
+                service: "1 DAY",
+                status: status,
+                tracker: { sun: 0, mon: 0, tue: 0, wed: 0, thu: 0, fri: 0, sat: 0 },
+                subtotal: 0,
+                quotaStatus: "INCOMPLETE",
+                lastWeek: 0,
+                lastQuotaStatus: "INCOMPLETE",
+                runningTotal: 0,
+                warnings: 0,
+                strikes: 0
+            };
+
+            if (!fullData[currentTab]) fullData[currentTab] = [];
+            fullData[currentTab].push(newRow);
+            renderTable();
+            closeAddModal();
+
+            document.getElementById('addPosition').value = '';
+            document.getElementById('addUsername').value = '';
+            document.getElementById('addRank').value = '';
+
+            sendDataToSheet(newRow);
         }
 
         function getStatusBadge(status) {
@@ -221,7 +297,6 @@
                             <th rowspan="2">Running Total</th>
                             <th rowspan="2">Warnings</th>
                             <th rowspan="2">Strikes</th>
-                            ${isEditor ? '<th rowspan="2">Action</th>' : ''}
                         </tr>
                         <tr class="sub-header">
                             <th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th>
@@ -230,20 +305,20 @@
                         </tr>
                     </thead>
                     <tbody>
-                        ${data.map((row, idx) => `
+                        ${(data || []).map((row) => `
                             <tr>
-                                <td>${isEditor ? `<input class="edit-field" id="pos_${idx}" value="${row.position || ''}">` : (row.position || '')}</td>
-                                <td>${isEditor ? `<input class="edit-field" id="usr_${idx}" value="${row.username || ''}">` : (row.username || '')}</td>
-                                <td>${isEditor ? `<input class="edit-field" id="rnk_${idx}" value="${row.rank || ''}">` : (row.rank || '')}</td>
+                                <td>${row.position || ''}</td>
+                                <td>${row.username || ''}</td>
+                                <td>${row.rank || ''}</td>
                                 <td>${row.service || '-'}</td>
                                 <td>${getStatusBadge(row.status || 'VACANT')}</td>
-                                <td>${isEditor ? `<input class="edit-field edit-field-sm" value="${row.tracker?.sun || 0}">` : (row.tracker?.sun || 0)}</td>
-                                <td>${isEditor ? `<input class="edit-field edit-field-sm" value="${row.tracker?.mon || 0}">` : (row.tracker?.mon || 0)}</td>
-                                <td>${isEditor ? `<input class="edit-field edit-field-sm" value="${row.tracker?.tue || 0}">` : (row.tracker?.tue || 0)}</td>
-                                <td>${isEditor ? `<input class="edit-field edit-field-sm" value="${row.tracker?.wed || 0}">` : (row.tracker?.wed || 0)}</td>
-                                <td>${isEditor ? `<input class="edit-field edit-field-sm" value="${row.tracker?.thu || 0}">` : (row.tracker?.thu || 0)}</td>
-                                <td>${isEditor ? `<input class="edit-field edit-field-sm" value="${row.tracker?.fri || 0}">` : (row.tracker?.fri || 0)}</td>
-                                <td>${isEditor ? `<input class="edit-field edit-field-sm" value="${row.tracker?.sat || 0}">` : (row.tracker?.sat || 0)}</td>
+                                <td>${row.tracker?.sun || 0}</td>
+                                <td>${row.tracker?.mon || 0}</td>
+                                <td>${row.tracker?.tue || 0}</td>
+                                <td>${row.tracker?.wed || 0}</td>
+                                <td>${row.tracker?.thu || 0}</td>
+                                <td>${row.tracker?.fri || 0}</td>
+                                <td>${row.tracker?.sat || 0}</td>
                                 <td><strong>${row.subtotal || 0}</strong></td>
                                 <td><span style="color:${row.quotaStatus === 'COMPLETE' ? '#4caf50' : '#ff5252'}">${row.quotaStatus || 'INCOMPLETE'}</span></td>
                                 <td>${row.lastWeek || 0}</td>
@@ -251,7 +326,6 @@
                                 <td><strong>${row.runningTotal || 0}</strong></td>
                                 <td>${row.warnings || 0}</td>
                                 <td>${renderStrikes(row.strikes || 0)}</td>
-                                ${isEditor ? `<td><button class="btn btn-gold" onclick="saveRow(${idx})">Save</button></td>` : ''}
                             </tr>
                         `).join('')}
                     </tbody>
@@ -272,7 +346,6 @@
                             <th colspan="2">Last Week</th>
                             <th rowspan="2">Running Total</th>
                             <th rowspan="2">Strikes</th>
-                            ${isEditor ? '<th rowspan="2">Action</th>' : ''}
                         </tr>
                         <tr class="sub-header">
                             <th>Ori</th><th>Sup</th><th>P1</th><th>P2</th><th>P3</th><th>P4</th><th>P5</th><th>Qz</th><th>Ex</th>
@@ -281,7 +354,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        ${data.map((row, idx) => `
+                        ${(data || []).map((row) => `
                             <tr>
                                 <td>${row.position || ''}</td>
                                 <td>${row.username || ''}</td>
@@ -296,49 +369,6 @@
                                 <td>${row.lastQuotaStatus || 'INCOMPLETE'}</td>
                                 <td><strong>${row.runningTotal || 0}</strong></td>
                                 <td>${renderStrikes(row.strikes || 0)}</td>
-                                ${isEditor ? `<td><button class="btn btn-gold" onclick="saveRow(${idx})">Save</button></td>` : ''}
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>`;
-        }
-
-        function renderLOATable(data) {
-            return `
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Log Date</th><th>Username</th><th>Office</th><th>Position</th><th>Rank</th>
-                            <th>Start Date</th><th>End Date</th><th>Reason</th><th>Approved By</th><th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${data.map(row => `
-                            <tr>
-                                <td>${row.logDate || ''}</td><td>${row.username || ''}</td><td>${row.office || ''}</td><td>${row.position || ''}</td>
-                                <td>${row.rank || ''}</td><td>${row.startDate || ''}</td><td>${row.endDate || ''}</td><td>${row.reason || ''}</td>
-                                <td>${row.approvedBy || ''}</td><td><span class="status-badge status-active">${row.status || 'PENDING'}</span></td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>`;
-        }
-
-        function renderDisciplineTable(data) {
-            return `
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Log Date</th><th>Username</th><th>Office</th><th>Position</th><th>Rank</th>
-                            <th>Punishment</th><th>Reason</th><th>Issued By</th><th>Performed On</th><th>Disciplinary Officer</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${data.map(row => `
-                            <tr>
-                                <td>${row.logDate || ''}</td><td>${row.username || ''}</td><td>${row.office || ''}</td><td>${row.position || ''}</td>
-                                <td>${row.rank || ''}</td><td><span style="color:#ff5252">${row.punishment || ''}</span></td><td>${row.reason || ''}</td>
-                                <td>${row.issuedBy || ''}</td><td>${row.performedOn || ''}</td><td>${row.discOfficer || ''}</td>
                             </tr>
                         `).join('')}
                     </tbody>
@@ -347,44 +377,18 @@
 
         function renderTable() {
             const container = document.getElementById('tableContainer');
-            if (currentTab === 'OCDF') container.innerHTML = renderOCDFTable(fullData.OCDF);
-            else if (currentTab === 'LOA') container.innerHTML = renderLOATable(fullData.LOA);
-            else if (currentTab === 'DISCIPLINE') container.innerHTML = renderDisciplineTable(fullData.DISCIPLINE);
-            else container.innerHTML = renderStandardTable(fullData[currentTab]);
+            if (currentTab === 'OCDF') container.innerHTML = renderOCDFTable(fullData.OCDF || []);
+            else container.innerHTML = renderStandardTable(fullData[currentTab] || []);
         }
 
         function switchTab(tab) {
             currentTab = tab;
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             if (event && event.target) event.target.classList.add('active');
-            
-            // Trigger a live fetch every time tab is switched
             fetchTabData(tab);
         }
 
-        function openAuthModal() { document.getElementById('authModal').classList.add('active'); }
-        function closeAuthModal() { document.getElementById('authModal').classList.remove('active'); document.getElementById('authError').style.display = 'none'; }
-
-        function verifyPasscode() {
-            if (document.getElementById('passcodeInput').value === PASSCODE) {
-                isEditor = true;
-                document.getElementById('authBadge').innerText = '🔓 Editor Mode Active';
-                document.getElementById('authBtn').style.display = 'none';
-                closeAuthModal();
-                renderTable();
-            } else {
-                document.getElementById('authError').style.display = 'block';
-            }
-        }
-
-        function saveRow(idx) {
-            alert('Updated row details saved & synced to Google Sheets database!');
-            renderTable();
-        }
-
-        // Initial fetch on page load
         fetchTabData('HQ');
     </script>
 </body>
 </html>
-
