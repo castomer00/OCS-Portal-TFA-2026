@@ -357,6 +357,42 @@
         }
 
         renderTable();
-    </script>
+    <// 1. Paste your Google Apps Script Web App URL here
+const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbxmTSEvGnMtOLVoqRlDd5UCIJmy2mhCplHgdG7yk8N3St4Val_wGT-QF8h69wzvkRtM/exec";
+
+// 2. Add the live fetch function with cache-busting enabled
+async function fetchTabData(tab) {
+    const container = document.getElementById('tableContainer');
+    if (container) container.innerHTML = 'Fetching updates from Google Sheets...';
+    
+    try {
+        // Appending &t=${Date.now()} ensures live data is pulled every time
+        const response = await fetch(`${SHEET_API_URL}?tab=${tab}&t=${Date.now()}`);
+        const data = await response.json();
+        
+        if (data && data.length > 0) {
+            // Replaces local static data with live rows from Google Sheets
+            fullData[tab] = data; 
+        } else {
+            console.warn("No data returned for tab:", tab);
+        }
+    } catch (e) {
+        console.error("Could not load live sheet data:", e);
+    }
+    renderTable();
+}
+
+// 3. Update tab switching to trigger fetching
+function switchTab(tab) {
+    currentTab = tab;
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    if (event && event.target) event.target.classList.add('active');
+    
+    // Fetch fresh data whenever switching tabs
+    fetchTabData(tab); 
+}
+
+// 4. Trigger initial fetch on page load
+fetchTabData('HQ');>
 </body>
 </html>
