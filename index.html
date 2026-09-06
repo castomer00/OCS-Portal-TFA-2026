@@ -118,7 +118,7 @@
     </div>
 
     <div class="content-panel">
-        <div id="tableContainer">Loading database...</div>
+        <div id="tableContainer">Fetching live database from Google Sheets...</div>
     </div>
 
     <div class="modal-overlay" id="authModal">
@@ -135,7 +135,7 @@
 
     <script>
         const PASSCODE = "OCS-Cute-2026";
-        const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbxmTSEvGnMtOLVoqRlDd5UCIJmy2mhCplHgdG7yk8N3St4Val_wGT-QF8h69wzvkRtM/exec"; // PASTE YOUR URL HERE
+        const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbxmTSEvGnMtOLVoqRlDd5UCIJmy2mhCplHgdG7yk8N3St4Val_wGT-QF8h69wzvkRtM/exec"; // PASTE YOUR WEB APP URL HERE
         
         let isEditor = false;
         let currentTab = 'HQ';
@@ -166,6 +166,30 @@
                 { logDate: "2026-08-20", username: "SampleOfficer", office: "OPS", position: "Junior Guard", rank: "2LT", punishment: "Warning", reason: "Inactivity on Duty", issuedBy: "noob_rg14", performedOn: "2026-08-21", discOfficer: "Yeyemode9192_1" }
             ]
         };
+
+        // Live API fetch with cache-busting timestamp
+        async function fetchTabData(tab) {
+            const container = document.getElementById('tableContainer');
+            if (container) container.innerHTML = 'Fetching updates from Google Sheets...';
+
+            if (!SHEET_API_URL || SHEET_API_URL === "https://script.google.com/macros/s/AKfycbxmTSEvGnMtOLVoqRlDd5UCIJmy2mhCplHgdG7yk8N3St4Val_wGT-QF8h69wzvkRtM/exec") {
+                renderTable();
+                return;
+            }
+
+            try {
+                // Append Date.now() to bypass browser cache completely
+                const response = await fetch(`${SHEET_API_URL}?tab=${tab}&t=${Date.now()}`);
+                const data = await response.json();
+
+                if (data && data.length > 0) {
+                    fullData[tab] = data;
+                }
+            } catch (e) {
+                console.warn("Could not fetch live sheet data, showing cached/local data instead:", e);
+            }
+            renderTable();
+        }
 
         function getStatusBadge(status) {
             if (status === "ACTIVE") return `<span class="status-badge status-active">ACTIVE</span>`;
@@ -208,25 +232,25 @@
                     <tbody>
                         ${data.map((row, idx) => `
                             <tr>
-                                <td>${isEditor ? `<input class="edit-field" id="pos_${idx}" value="${row.position}">` : row.position}</td>
-                                <td>${isEditor ? `<input class="edit-field" id="usr_${idx}" value="${row.username}">` : row.username}</td>
-                                <td>${isEditor ? `<input class="edit-field" id="rnk_${idx}" value="${row.rank}">` : row.rank}</td>
-                                <td>${row.service}</td>
-                                <td>${getStatusBadge(row.status)}</td>
-                                <td>${isEditor ? `<input class="edit-field edit-field-sm" value="${row.tracker.sun}">` : row.tracker.sun}</td>
-                                <td>${isEditor ? `<input class="edit-field edit-field-sm" value="${row.tracker.mon}">` : row.tracker.mon}</td>
-                                <td>${isEditor ? `<input class="edit-field edit-field-sm" value="${row.tracker.tue}">` : row.tracker.tue}</td>
-                                <td>${isEditor ? `<input class="edit-field edit-field-sm" value="${row.tracker.wed}">` : row.tracker.wed}</td>
-                                <td>${isEditor ? `<input class="edit-field edit-field-sm" value="${row.tracker.thu}">` : row.tracker.thu}</td>
-                                <td>${isEditor ? `<input class="edit-field edit-field-sm" value="${row.tracker.fri}">` : row.tracker.fri}</td>
-                                <td>${isEditor ? `<input class="edit-field edit-field-sm" value="${row.tracker.sat}">` : row.tracker.sat}</td>
-                                <td><strong>${row.subtotal}</strong></td>
-                                <td><span style="color:${row.quotaStatus === 'COMPLETE' ? '#4caf50' : '#ff5252'}">${row.quotaStatus}</span></td>
-                                <td>${row.lastWeek}</td>
-                                <td>${row.lastQuotaStatus}</td>
-                                <td><strong>${row.runningTotal}</strong></td>
-                                <td>${row.warnings}</td>
-                                <td>${renderStrikes(row.strikes)}</td>
+                                <td>${isEditor ? `<input class="edit-field" id="pos_${idx}" value="${row.position || ''}">` : (row.position || '')}</td>
+                                <td>${isEditor ? `<input class="edit-field" id="usr_${idx}" value="${row.username || ''}">` : (row.username || '')}</td>
+                                <td>${isEditor ? `<input class="edit-field" id="rnk_${idx}" value="${row.rank || ''}">` : (row.rank || '')}</td>
+                                <td>${row.service || '-'}</td>
+                                <td>${getStatusBadge(row.status || 'VACANT')}</td>
+                                <td>${isEditor ? `<input class="edit-field edit-field-sm" value="${row.tracker?.sun || 0}">` : (row.tracker?.sun || 0)}</td>
+                                <td>${isEditor ? `<input class="edit-field edit-field-sm" value="${row.tracker?.mon || 0}">` : (row.tracker?.mon || 0)}</td>
+                                <td>${isEditor ? `<input class="edit-field edit-field-sm" value="${row.tracker?.tue || 0}">` : (row.tracker?.tue || 0)}</td>
+                                <td>${isEditor ? `<input class="edit-field edit-field-sm" value="${row.tracker?.wed || 0}">` : (row.tracker?.wed || 0)}</td>
+                                <td>${isEditor ? `<input class="edit-field edit-field-sm" value="${row.tracker?.thu || 0}">` : (row.tracker?.thu || 0)}</td>
+                                <td>${isEditor ? `<input class="edit-field edit-field-sm" value="${row.tracker?.fri || 0}">` : (row.tracker?.fri || 0)}</td>
+                                <td>${isEditor ? `<input class="edit-field edit-field-sm" value="${row.tracker?.sat || 0}">` : (row.tracker?.sat || 0)}</td>
+                                <td><strong>${row.subtotal || 0}</strong></td>
+                                <td><span style="color:${row.quotaStatus === 'COMPLETE' ? '#4caf50' : '#ff5252'}">${row.quotaStatus || 'INCOMPLETE'}</span></td>
+                                <td>${row.lastWeek || 0}</td>
+                                <td>${row.lastQuotaStatus || 'INCOMPLETE'}</td>
+                                <td><strong>${row.runningTotal || 0}</strong></td>
+                                <td>${row.warnings || 0}</td>
+                                <td>${renderStrikes(row.strikes || 0)}</td>
                                 ${isEditor ? `<td><button class="btn btn-gold" onclick="saveRow(${idx})">Save</button></td>` : ''}
                             </tr>
                         `).join('')}
@@ -259,19 +283,19 @@
                     <tbody>
                         ${data.map((row, idx) => `
                             <tr>
-                                <td>${row.position}</td>
-                                <td>${row.username}</td>
-                                <td>${row.rank}</td>
-                                <td>${getStatusBadge(row.status)}</td>
-                                <td>${row.faculty.ori}</td><td>${row.faculty.sup}</td><td>${row.faculty.p1}</td>
-                                <td>${row.faculty.p2}</td><td>${row.faculty.p3}</td><td>${row.faculty.p4}</td>
-                                <td>${row.faculty.p5}</td><td>${row.faculty.qz}</td><td>${row.faculty.ex}</td>
-                                <td><strong>${row.subtotal}</strong></td>
-                                <td>${row.quotaStatus}</td>
-                                <td>${row.lastWeek}</td>
-                                <td>${row.lastQuotaStatus}</td>
-                                <td><strong>${row.runningTotal}</strong></td>
-                                <td>${renderStrikes(row.strikes)}</td>
+                                <td>${row.position || ''}</td>
+                                <td>${row.username || ''}</td>
+                                <td>${row.rank || ''}</td>
+                                <td>${getStatusBadge(row.status || 'VACANT')}</td>
+                                <td>${row.faculty?.ori || 0}</td><td>${row.faculty?.sup || 0}</td><td>${row.faculty?.p1 || 0}</td>
+                                <td>${row.faculty?.p2 || 0}</td><td>${row.faculty?.p3 || 0}</td><td>${row.faculty?.p4 || 0}</td>
+                                <td>${row.faculty?.p5 || 0}</td><td>${row.faculty?.qz || 0}</td><td>${row.faculty?.ex || 0}</td>
+                                <td><strong>${row.subtotal || 0}</strong></td>
+                                <td>${row.quotaStatus || 'INCOMPLETE'}</td>
+                                <td>${row.lastWeek || 0}</td>
+                                <td>${row.lastQuotaStatus || 'INCOMPLETE'}</td>
+                                <td><strong>${row.runningTotal || 0}</strong></td>
+                                <td>${renderStrikes(row.strikes || 0)}</td>
                                 ${isEditor ? `<td><button class="btn btn-gold" onclick="saveRow(${idx})">Save</button></td>` : ''}
                             </tr>
                         `).join('')}
@@ -291,9 +315,9 @@
                     <tbody>
                         ${data.map(row => `
                             <tr>
-                                <td>${row.logDate}</td><td>${row.username}</td><td>${row.office}</td><td>${row.position}</td>
-                                <td>${row.rank}</td><td>${row.startDate}</td><td>${row.endDate}</td><td>${row.reason}</td>
-                                <td>${row.approvedBy}</td><td><span class="status-badge status-active">${row.status}</span></td>
+                                <td>${row.logDate || ''}</td><td>${row.username || ''}</td><td>${row.office || ''}</td><td>${row.position || ''}</td>
+                                <td>${row.rank || ''}</td><td>${row.startDate || ''}</td><td>${row.endDate || ''}</td><td>${row.reason || ''}</td>
+                                <td>${row.approvedBy || ''}</td><td><span class="status-badge status-active">${row.status || 'PENDING'}</span></td>
                             </tr>
                         `).join('')}
                     </tbody>
@@ -312,9 +336,9 @@
                     <tbody>
                         ${data.map(row => `
                             <tr>
-                                <td>${row.logDate}</td><td>${row.username}</td><td>${row.office}</td><td>${row.position}</td>
-                                <td>${row.rank}</td><td><span style="color:#ff5252">${row.punishment}</span></td><td>${row.reason}</td>
-                                <td>${row.issuedBy}</td><td>${row.performedOn}</td><td>${row.discOfficer}</td>
+                                <td>${row.logDate || ''}</td><td>${row.username || ''}</td><td>${row.office || ''}</td><td>${row.position || ''}</td>
+                                <td>${row.rank || ''}</td><td><span style="color:#ff5252">${row.punishment || ''}</span></td><td>${row.reason || ''}</td>
+                                <td>${row.issuedBy || ''}</td><td>${row.performedOn || ''}</td><td>${row.discOfficer || ''}</td>
                             </tr>
                         `).join('')}
                     </tbody>
@@ -332,8 +356,10 @@
         function switchTab(tab) {
             currentTab = tab;
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
-            renderTable();
+            if (event && event.target) event.target.classList.add('active');
+            
+            // Trigger a live fetch every time tab is switched
+            fetchTabData(tab);
         }
 
         function openAuthModal() { document.getElementById('authModal').classList.add('active'); }
@@ -356,43 +382,9 @@
             renderTable();
         }
 
-        renderTable();
-    <// 1. Paste your Google Apps Script Web App URL here
-const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbxmTSEvGnMtOLVoqRlDd5UCIJmy2mhCplHgdG7yk8N3St4Val_wGT-QF8h69wzvkRtM/exec";
-
-// 2. Add the live fetch function with cache-busting enabled
-async function fetchTabData(tab) {
-    const container = document.getElementById('tableContainer');
-    if (container) container.innerHTML = 'Fetching updates from Google Sheets...';
-    
-    try {
-        // Appending &t=${Date.now()} ensures live data is pulled every time
-        const response = await fetch(`${SHEET_API_URL}?tab=${tab}&t=${Date.now()}`);
-        const data = await response.json();
-        
-        if (data && data.length > 0) {
-            // Replaces local static data with live rows from Google Sheets
-            fullData[tab] = data; 
-        } else {
-            console.warn("No data returned for tab:", tab);
-        }
-    } catch (e) {
-        console.error("Could not load live sheet data:", e);
-    }
-    renderTable();
-}
-
-// 3. Update tab switching to trigger fetching
-function switchTab(tab) {
-    currentTab = tab;
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    if (event && event.target) event.target.classList.add('active');
-    
-    // Fetch fresh data whenever switching tabs
-    fetchTabData(tab); 
-}
-
-// 4. Trigger initial fetch on page load
-fetchTabData('HQ');>
+        // Initial fetch on page load
+        fetchTabData('HQ');
+    </script>
 </body>
 </html>
+
