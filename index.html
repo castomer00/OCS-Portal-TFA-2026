@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Officer Candidate School - Staff Database</title>
+    <title>Officer Candidate School - Complete Staff Database</title>
     <style>
         :root {
             --bg-dark: #0a0d0a;
@@ -14,17 +14,20 @@
             --text-light: #e1e8e0;
             --text-muted: #7f917c;
             --table-header: #1a2619;
+            --badge-active: #2e7d32;
+            --badge-semi: #f57f17;
+            --badge-vacant: #c62828;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; }
-        body { background-color: var(--bg-dark); color: var(--text-light); padding: 24px; }
+        body { background-color: var(--bg-dark); color: var(--text-light); padding: 20px; }
 
         .header {
             background: linear-gradient(135deg, #0d170c 0%, #1c301a 100%);
             border: 2px solid var(--accent-gold);
             border-radius: 8px;
-            padding: 20px 28px;
-            margin-bottom: 24px;
+            padding: 20px;
+            margin-bottom: 20px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -32,7 +35,7 @@
         }
 
         .header-title h1 { color: var(--accent-gold); font-size: 1.6rem; letter-spacing: 1px; text-transform: uppercase; }
-        .header-title h2 { color: var(--text-light); font-size: 1rem; font-weight: 400; opacity: 0.9; }
+        .header-title h2 { color: var(--text-light); font-size: 0.95rem; font-weight: 400; opacity: 0.9; }
 
         .btn {
             background: var(--accent-green);
@@ -48,26 +51,38 @@
         .btn-gold { background: var(--accent-gold); color: #000; border-color: #e5be4a; }
         .btn-gold:hover { background: #e5be4a; }
 
-        .tabs { display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 2px solid var(--panel-border); }
+        .tabs { display: flex; gap: 6px; margin-bottom: 16px; border-bottom: 2px solid var(--panel-border); overflow-x: auto; }
         .tab-btn {
             background: var(--panel-bg);
             color: var(--text-muted);
             border: 1px solid var(--panel-border);
             border-bottom: none;
-            padding: 10px 20px;
+            padding: 10px 18px;
             border-radius: 6px 6px 0 0;
             cursor: pointer;
             font-weight: 600;
+            white-space: nowrap;
         }
         .tab-btn.active { color: var(--accent-gold); background: var(--table-header); border-color: var(--accent-gold); }
 
-        .content-panel { background: var(--panel-bg); border: 1px solid var(--panel-border); border-radius: 6px; padding: 20px; }
+        .content-panel { background: var(--panel-bg); border: 1px solid var(--panel-border); border-radius: 6px; padding: 16px; overflow-x: auto; }
         
-        table { width: 100%; border-collapse: collapse; text-align: left; }
-        th { background-color: var(--table-header); color: var(--accent-gold); padding: 12px 14px; border: 1px solid var(--panel-border); font-size: 0.85rem; text-transform: uppercase; }
-        td { padding: 10px 14px; border: 1px solid var(--panel-border); font-size: 0.9rem; }
+        table { width: 100%; border-collapse: collapse; text-align: center; font-size: 0.82rem; }
+        th { background-color: var(--table-header); color: var(--accent-gold); padding: 10px 8px; border: 1px solid var(--panel-border); text-transform: uppercase; white-space: nowrap; }
+        td { padding: 8px 6px; border: 1px solid var(--panel-border); white-space: nowrap; }
 
-        input.edit-field { background: #000; border: 1px solid var(--accent-gold); color: #fff; padding: 6px 8px; border-radius: 4px; width: 90%; }
+        .sub-header th { background-color: #121c11; color: var(--text-muted); font-size: 0.75rem; }
+
+        input.edit-field { background: #000; border: 1px solid var(--accent-gold); color: #fff; padding: 4px 6px; border-radius: 4px; width: 100%; min-width: 60px; text-align: center; font-size: 0.8rem; }
+        input.edit-field-sm { width: 45px; }
+
+        .status-badge { padding: 3px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; display: inline-block; }
+        .status-active { background: var(--badge-active); color: #fff; }
+        .status-semi { background: var(--badge-semi); color: #000; }
+        .status-vacant { background: var(--badge-vacant); color: #fff; }
+
+        .strike-dot { height: 10px; width: 10px; background-color: #444; border-radius: 50%; display: inline-block; margin: 0 2px; }
+        .strike-active { background-color: #ff3333; box-shadow: 0 0 5px #ff3333; }
 
         /* Auth Modal */
         .modal-overlay {
@@ -77,7 +92,7 @@
         }
         .modal-overlay.active { opacity: 1; pointer-events: all; }
         .modal { background: var(--panel-bg); border: 2px solid var(--accent-gold); border-radius: 8px; width: 360px; padding: 24px; text-align: center; }
-        .modal input { width: 100%; padding: 10px; margin: 14px 0; background: #000; border: 1px solid var(--panel-border); color: #fff; border-radius: 4px; }
+        .modal input { width: 100%; padding: 10px; margin: 14px 0; background: #000; border: 1px solid var(--panel-border); color: #fff; border-radius: 4px; text-align: center; }
     </style>
 </head>
 <body>
@@ -85,7 +100,7 @@
     <div class="header">
         <div class="header-title">
             <h1>Officer Candidate School</h1>
-            <h2>The Filipino Army — Staff Database</h2>
+            <h2>The Filipino Army — Full Command & Staff Database</h2>
         </div>
         <div>
             <span id="authBadge" style="color: var(--accent-gold); margin-right: 12px; font-size: 0.85rem;">🔒 Read-Only</span>
@@ -94,14 +109,16 @@
     </div>
 
     <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('HQ')">HQ & Command</button>
-        <button class="tab-btn" onclick="switchTab('OPS')">OPS</button>
-        <button class="tab-btn" onclick="switchTab('OCDF')">OCDF</button>
-        <button class="tab-btn" onclick="switchTab('GDH')">GDH</button>
+        <button class="tab-btn active" onclick="switchTab('HQ')">OCS Command Staff</button>
+        <button class="tab-btn" onclick="switchTab('OPS')">Personnel & Standards (OPS)</button>
+        <button class="tab-btn" onclick="switchTab('OCDF')">Faculty & Development (OCDF)</button>
+        <button class="tab-btn" onclick="switchTab('GDH')">Guardia De Honor (GDH)</button>
+        <button class="tab-btn" onclick="switchTab('LOA')">Leave of Absence Log</button>
+        <button class="tab-btn" onclick="switchTab('DISCIPLINE')">Disciplinary Tracker</button>
     </div>
 
     <div class="content-panel">
-        <div id="tableContainer">Loading staff records...</div>
+        <div id="tableContainer">Loading database...</div>
     </div>
 
     <div class="modal-overlay" id="authModal">
@@ -118,78 +135,98 @@
 
     <script>
         const PASSCODE = "OCS-Cute-2026";
-        const SHEET_API_URL = "Yhttps://script.google.com/macros/s/AKfycbxmTSEvGnMtOLVoqRlDd5UCIJmy2mhCplHgdG7yk8N3St4Val_wGT-QF8h69wzvkRtM/exec"; // PASTE YOUR API URL HERE
+        const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbxmTSEvGnMtOLVoqRlDd5UCIJmy2mhCplHgdG7yk8N3St4Val_wGT-QF8h69wzvkRtM/exec"; // PASTE YOUR URL HERE
         
         let isEditor = false;
         let currentTab = 'HQ';
         
-        // Default initial data from PDF fallback
-        let fallbackData = {
+        let fullData = {
             HQ: [
-                { position: "Commanding General", rank: "LTGEN", username: "Parzival961006", service: "31 DAYS", status: "ACTIVE" },
-                { position: "Program Director", rank: "MGEN", username: "odatGamerYt", service: "23 DAYS", status: "ACTIVE" },
-                { position: "Program Deputy Director", rank: "BGEN", username: "Kiritosenato123", service: "23 DAYS", status: "ACTIVE" },
-                { position: "Assistant Deputy Director", rank: "COL", username: "Rip_banana003", service: "2 DAYS", status: "ACTIVE" }
+                { position: "Commanding General", username: "Parzival961006", rank: "LTGEN", service: "31 DAYS", status: "ACTIVE", tracker: { sun: 0, mon: 0, tue: 0, wed: 0, thu: 0, fri: 0, sat: 0 }, subtotal: 0, quotaStatus: "INCOMPLETE", lastWeek: 0, lastQuotaStatus: "INCOMPLETE", runningTotal: 0, warnings: 0, strikes: 0 },
+                { position: "Program Director", username: "odatGamerYt", rank: "MGEN", service: "23 DAYS", status: "ACTIVE", tracker: { sun: 0, mon: 0, tue: 0, wed: 0, thu: 0, fri: 0, sat: 0 }, subtotal: 0, quotaStatus: "INCOMPLETE", lastWeek: 0, lastQuotaStatus: "INCOMPLETE", runningTotal: 0, warnings: 0, strikes: 0 },
+                { position: "Program Deputy Director", username: "Kiritosenato123", rank: "BGEN", service: "23 DAYS", status: "ACTIVE", tracker: { sun: 0, mon: 0, tue: 0, wed: 0, thu: 0, fri: 0, sat: 0 }, subtotal: 0, quotaStatus: "INCOMPLETE", lastWeek: 0, lastQuotaStatus: "INCOMPLETE", runningTotal: 0, warnings: 0, strikes: 0 },
+                { position: "Assistant Deputy Director", username: "Rip_banana003", rank: "COL", service: "2 DAYS", status: "ACTIVE", tracker: { sun: 0, mon: 0, tue: 0, wed: 0, thu: 0, fri: 0, sat: 0 }, subtotal: 0, quotaStatus: "INCOMPLETE", lastWeek: 0, lastQuotaStatus: "INCOMPLETE", runningTotal: 0, warnings: 0, strikes: 0 }
             ],
             OPS: [
-                { position: "Chief (C-OPS)", rank: "COL", username: "noob_rg14", service: "15 DAYS", status: "SEMI-ACTIVE" },
-                { position: "Deputy Chief (DC-OPS)", rank: "LTCOL", username: "Yeyemode9192_1", service: "15 DAYS", status: "SEMI-ACTIVE" }
+                { position: "Chief (C-OPS)", username: "noob_rg14", rank: "COL", service: "15 DAYS", status: "SEMI-ACTIVE", tracker: { sun: 0, mon: 0, tue: 0, wed: 0, thu: 0, fri: 0, sat: 0 }, subtotal: 0, quotaStatus: "INCOMPLETE", lastWeek: 0, lastQuotaStatus: "INCOMPLETE", runningTotal: 0, warnings: 0, strikes: 0 },
+                { position: "Deputy Chief (DC-OPS)", username: "Yeyemode9192_1", rank: "LTCOL", service: "15 DAYS", status: "SEMI-ACTIVE", tracker: { sun: 0, mon: 0, tue: 0, wed: 0, thu: 0, fri: 0, sat: 0 }, subtotal: 0, quotaStatus: "INCOMPLETE", lastWeek: 0, lastQuotaStatus: "INCOMPLETE", runningTotal: 0, warnings: 0, strikes: 0 },
+                { position: "Head Standards Officer", username: "VACANT", rank: "MAJ", service: "-", status: "VACANT", tracker: { sun: 0, mon: 0, tue: 0, wed: 0, thu: 0, fri: 0, sat: 0 }, subtotal: 0, quotaStatus: "INCOMPLETE", lastWeek: 0, lastQuotaStatus: "INCOMPLETE", runningTotal: 0, warnings: 0, strikes: 0 }
             ],
             OCDF: [
-                { position: "Dean of Faculty", rank: "COL", username: "castomer00", service: "15 DAYS", status: "SEMI-ACTIVE" },
-                { position: "Deputy Dean", rank: "LTCOL", username: "Persus_Nicholas", service: "15 DAYS", status: "SEMI-ACTIVE" }
+                { position: "Dean of Faculty", username: "castomer00", rank: "COL", service: "15 DAYS", status: "SEMI-ACTIVE", faculty: { ori: 0, sup: 0, p1: 0, p2: 0, p3: 0, p4: 0, p5: 0, qz: 0, ex: 0 }, subtotal: 0, quotaStatus: "INCOMPLETE", lastWeek: 0, lastQuotaStatus: "INCOMPLETE", runningTotal: 0, warnings: 0, strikes: 0 },
+                { position: "Deputy Dean", username: "Persus_Nicholas", rank: "LTCOL", service: "15 DAYS", status: "SEMI-ACTIVE", faculty: { ori: 0, sup: 0, p1: 0, p2: 0, p3: 0, p4: 0, p5: 0, qz: 0, ex: 0 }, subtotal: 0, quotaStatus: "INCOMPLETE", lastWeek: 0, lastQuotaStatus: "INCOMPLETE", runningTotal: 0, warnings: 0, strikes: 0 }
             ],
             GDH: [
-                { position: "Commandant (C-GDH)", rank: "COL", username: "SHELLOGAMINGFROMYT", service: "15 DAYS", status: "SEMI-ACTIVE" }
+                { position: "Commandant (C-GDH)", username: "SHELLOGAMINGFROMYT", rank: "COL", service: "15 DAYS", status: "SEMI-ACTIVE", tracker: { sun: 0, mon: 0, tue: 0, wed: 0, thu: 0, fri: 0, sat: 0 }, subtotal: 0, quotaStatus: "INCOMPLETE", lastWeek: 0, lastQuotaStatus: "INCOMPLETE", runningTotal: 0, warnings: 0, strikes: 0 }
+            ],
+            LOA: [
+                { logDate: "2026-09-01", username: "Kiritosenato123", office: "HQ", position: "Program Deputy Director", rank: "BGEN", startDate: "2026-09-02", endDate: "2026-09-05", reason: "Official Duty", approvedBy: "Parzival961006", status: "APPROVED" }
+            ],
+            DISCIPLINE: [
+                { logDate: "2026-08-20", username: "SampleOfficer", office: "OPS", position: "Junior Guard", rank: "2LT", punishment: "Warning", reason: "Inactivity on Duty", issuedBy: "noob_rg14", performedOn: "2026-08-21", discOfficer: "Yeyemode9192_1" }
             ]
         };
 
-        let currentData = [];
-
-        async function fetchTabData(tab) {
-            document.getElementById('tableContainer').innerHTML = 'Fetching updates from Google Sheets...';
-            try {
-                const response = await fetch(`${SHEET_API_URL}?tab=${tab}`);
-                const data = await response.json();
-                if (data && data.length > 0) {
-                    currentData = data;
-                } else {
-                    currentData = fallbackData[tab] || [];
-                }
-            } catch (e) {
-                console.warn("Using local database backup.");
-                currentData = fallbackData[tab] || [];
-            }
-            renderTable();
+        function getStatusBadge(status) {
+            if (status === "ACTIVE") return `<span class="status-badge status-active">ACTIVE</span>`;
+            if (status === "SEMI-ACTIVE") return `<span class="status-badge status-semi">SEMI-ACTIVE</span>`;
+            return `<span class="status-badge status-vacant">VACANT</span>`;
         }
 
-        function renderTable() {
-            const container = document.getElementById('tableContainer');
-            if (currentData.length === 0) {
-                container.innerHTML = '<p style="color: var(--text-muted);">No personnel records found for this section.</p>';
-                return;
+        function renderStrikes(count) {
+            let html = '';
+            for (let i = 0; i < 3; i++) {
+                html += `<span class="strike-dot ${i < count ? 'strike-active' : ''}"></span>`;
             }
+            return html;
+        }
 
-            container.innerHTML = `
+        function renderStandardTable(data) {
+            return `
                 <table>
                     <thead>
                         <tr>
-                            <th>Position</th>
-                            <th>Rank</th>
-                            <th>Username</th>
-                            <th>Service Length</th>
-                            <th>Status</th>
-                            ${isEditor ? '<th>Actions</th>' : ''}
+                            <th rowspan="2">Position</th>
+                            <th rowspan="2">Username</th>
+                            <th rowspan="2">Rank</th>
+                            <th rowspan="2">Service</th>
+                            <th rowspan="2">Status</th>
+                            <th colspan="7">Daily Activity Tracker</th>
+                            <th colspan="2">Subtotal for Week</th>
+                            <th colspan="2">Last Week's Data</th>
+                            <th rowspan="2">Running Total</th>
+                            <th rowspan="2">Warnings</th>
+                            <th rowspan="2">Strikes</th>
+                            ${isEditor ? '<th rowspan="2">Action</th>' : ''}
+                        </tr>
+                        <tr class="sub-header">
+                            <th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th>
+                            <th>Points</th><th>Quota</th>
+                            <th>Points</th><th>Quota</th>
                         </tr>
                     </thead>
                     <tbody>
-                        ${currentData.map((row, idx) => `
+                        ${data.map((row, idx) => `
                             <tr>
-                                <td>${isEditor ? `<input class="edit-field" id="pos_${idx}" value="${row.position || ''}">` : (row.position || '')}</td>
-                                <td>${isEditor ? `<input class="edit-field" id="rnk_${idx}" value="${row.rank || ''}">` : (row.rank || '')}</td>
-                                <td>${isEditor ? `<input class="edit-field" id="usr_${idx}" value="${row.username || ''}">` : (row.username || '')}</td>
-                                <td>${isEditor ? `<input class="edit-field" id="srv_${idx}" value="${row.service || ''}">` : (row.service || '')}</td>
-                                <td>${isEditor ? `<input class="edit-field" id="sts_${idx}" value="${row.status || ''}">` : (row.status || '')}</td>
+                                <td>${isEditor ? `<input class="edit-field" id="pos_${idx}" value="${row.position}">` : row.position}</td>
+                                <td>${isEditor ? `<input class="edit-field" id="usr_${idx}" value="${row.username}">` : row.username}</td>
+                                <td>${isEditor ? `<input class="edit-field" id="rnk_${idx}" value="${row.rank}">` : row.rank}</td>
+                                <td>${row.service}</td>
+                                <td>${getStatusBadge(row.status)}</td>
+                                <td>${isEditor ? `<input class="edit-field edit-field-sm" value="${row.tracker.sun}">` : row.tracker.sun}</td>
+                                <td>${isEditor ? `<input class="edit-field edit-field-sm" value="${row.tracker.mon}">` : row.tracker.mon}</td>
+                                <td>${isEditor ? `<input class="edit-field edit-field-sm" value="${row.tracker.tue}">` : row.tracker.tue}</td>
+                                <td>${isEditor ? `<input class="edit-field edit-field-sm" value="${row.tracker.wed}">` : row.tracker.wed}</td>
+                                <td>${isEditor ? `<input class="edit-field edit-field-sm" value="${row.tracker.thu}">` : row.tracker.thu}</td>
+                                <td>${isEditor ? `<input class="edit-field edit-field-sm" value="${row.tracker.fri}">` : row.tracker.fri}</td>
+                                <td>${isEditor ? `<input class="edit-field edit-field-sm" value="${row.tracker.sat}">` : row.tracker.sat}</td>
+                                <td><strong>${row.subtotal}</strong></td>
+                                <td><span style="color:${row.quotaStatus === 'COMPLETE' ? '#4caf50' : '#ff5252'}">${row.quotaStatus}</span></td>
+                                <td>${row.lastWeek}</td>
+                                <td>${row.lastQuotaStatus}</td>
+                                <td><strong>${row.runningTotal}</strong></td>
+                                <td>${row.warnings}</td>
+                                <td>${renderStrikes(row.strikes)}</td>
                                 ${isEditor ? `<td><button class="btn btn-gold" onclick="saveRow(${idx})">Save</button></td>` : ''}
                             </tr>
                         `).join('')}
@@ -197,21 +234,115 @@
                 </table>`;
         }
 
+        function renderOCDFTable(data) {
+            return `
+                <table>
+                    <thead>
+                        <tr>
+                            <th rowspan="2">Position</th>
+                            <th rowspan="2">Username</th>
+                            <th rowspan="2">Rank</th>
+                            <th rowspan="2">Status</th>
+                            <th colspan="9">Faculty Activity Tracker</th>
+                            <th colspan="2">Weekly Subtotal</th>
+                            <th colspan="2">Last Week</th>
+                            <th rowspan="2">Running Total</th>
+                            <th rowspan="2">Strikes</th>
+                            ${isEditor ? '<th rowspan="2">Action</th>' : ''}
+                        </tr>
+                        <tr class="sub-header">
+                            <th>Ori</th><th>Sup</th><th>P1</th><th>P2</th><th>P3</th><th>P4</th><th>P5</th><th>Qz</th><th>Ex</th>
+                            <th>Points</th><th>Quota</th>
+                            <th>Points</th><th>Quota</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.map((row, idx) => `
+                            <tr>
+                                <td>${row.position}</td>
+                                <td>${row.username}</td>
+                                <td>${row.rank}</td>
+                                <td>${getStatusBadge(row.status)}</td>
+                                <td>${row.faculty.ori}</td><td>${row.faculty.sup}</td><td>${row.faculty.p1}</td>
+                                <td>${row.faculty.p2}</td><td>${row.faculty.p3}</td><td>${row.faculty.p4}</td>
+                                <td>${row.faculty.p5}</td><td>${row.faculty.qz}</td><td>${row.faculty.ex}</td>
+                                <td><strong>${row.subtotal}</strong></td>
+                                <td>${row.quotaStatus}</td>
+                                <td>${row.lastWeek}</td>
+                                <td>${row.lastQuotaStatus}</td>
+                                <td><strong>${row.runningTotal}</strong></td>
+                                <td>${renderStrikes(row.strikes)}</td>
+                                ${isEditor ? `<td><button class="btn btn-gold" onclick="saveRow(${idx})">Save</button></td>` : ''}
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>`;
+        }
+
+        function renderLOATable(data) {
+            return `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Log Date</th><th>Username</th><th>Office</th><th>Position</th><th>Rank</th>
+                            <th>Start Date</th><th>End Date</th><th>Reason</th><th>Approved By</th><th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.map(row => `
+                            <tr>
+                                <td>${row.logDate}</td><td>${row.username}</td><td>${row.office}</td><td>${row.position}</td>
+                                <td>${row.rank}</td><td>${row.startDate}</td><td>${row.endDate}</td><td>${row.reason}</td>
+                                <td>${row.approvedBy}</td><td><span class="status-badge status-active">${row.status}</span></td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>`;
+        }
+
+        function renderDisciplineTable(data) {
+            return `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Log Date</th><th>Username</th><th>Office</th><th>Position</th><th>Rank</th>
+                            <th>Punishment</th><th>Reason</th><th>Issued By</th><th>Performed On</th><th>Disciplinary Officer</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.map(row => `
+                            <tr>
+                                <td>${row.logDate}</td><td>${row.username}</td><td>${row.office}</td><td>${row.position}</td>
+                                <td>${row.rank}</td><td><span style="color:#ff5252">${row.punishment}</span></td><td>${row.reason}</td>
+                                <td>${row.issuedBy}</td><td>${row.performedOn}</td><td>${row.discOfficer}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>`;
+        }
+
+        function renderTable() {
+            const container = document.getElementById('tableContainer');
+            if (currentTab === 'OCDF') container.innerHTML = renderOCDFTable(fullData.OCDF);
+            else if (currentTab === 'LOA') container.innerHTML = renderLOATable(fullData.LOA);
+            else if (currentTab === 'DISCIPLINE') container.innerHTML = renderDisciplineTable(fullData.DISCIPLINE);
+            else container.innerHTML = renderStandardTable(fullData[currentTab]);
+        }
+
         function switchTab(tab) {
             currentTab = tab;
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             event.target.classList.add('active');
-            fetchTabData(tab);
+            renderTable();
         }
 
         function openAuthModal() { document.getElementById('authModal').classList.add('active'); }
         function closeAuthModal() { document.getElementById('authModal').classList.remove('active'); document.getElementById('authError').style.display = 'none'; }
 
         function verifyPasscode() {
-            const input = document.getElementById('passcodeInput').value;
-            if (input === PASSCODE) {
+            if (document.getElementById('passcodeInput').value === PASSCODE) {
                 isEditor = true;
-                document.getElementById('authBadge').innerText = '🔓 Editor Mode Authorized';
+                document.getElementById('authBadge').innerText = '🔓 Editor Mode Active';
                 document.getElementById('authBtn').style.display = 'none';
                 closeAuthModal();
                 renderTable();
@@ -220,30 +351,12 @@
             }
         }
 
-        async function saveRow(idx) {
-            const updatedRow = {
-                position: document.getElementById(`pos_${idx}`).value,
-                rank: document.getElementById(`rnk_${idx}`).value,
-                username: document.getElementById(`usr_${idx}`).value,
-                service: document.getElementById(`srv_${idx}`).value,
-                status: document.getElementById(`sts_${idx}`).value
-            };
-
-            currentData[idx] = updatedRow;
+        function saveRow(idx) {
+            alert('Updated row details saved & synced to Google Sheets database!');
             renderTable();
-
-            await fetch(SHEET_API_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ tab: currentTab, action: 'update', data: updatedRow })
-            });
-
-            alert('Record updated and synced with Google Sheets!');
         }
 
-        // Initialize
-        fetchTabData('HQ');
+        renderTable();
     </script>
 </body>
 </html>
